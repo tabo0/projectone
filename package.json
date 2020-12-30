@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^0.20.0",
     "element-ui": "^2.13.2",
+    "jquery": "^3.5.1",
     "jwchat": "^0.2.47",
     "vue": "^2.5.2",
     "vue-cookie": "^1.1.4",

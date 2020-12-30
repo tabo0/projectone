@@ -11,13 +11,10 @@
   <div>
  
       <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
-  <el-menu-item index="1">首页</el-menu-item>
-  <el-menu-item index="2">好友</el-menu-item>
-  <el-menu-item index="3">动态</el-menu-item>
-  <el-menu-item index="4">发动态</el-menu-item>
-  <el-menu-item index="5">我的分享</el-menu-item>
-  <el-menu-item index="6">搜索文件</el-menu-item>
-  <el-menu-item index="10" style="float:right;margin-right:1cm"><img  class="userImage" :src="imgUrl" alt="头像">&nbsp;&nbsp;{{user}} 
+  <el-menu-item index="1">日志记录</el-menu-item>
+  <el-menu-item index="2">审核文件</el-menu-item>
+  <el-menu-item index="3">查看审核通过的文件</el-menu-item>
+  <el-menu-item index="10" style="float:right;margin-right:1cm"><img  class="userImage" :src="imgUrl" alt="头像">&nbsp;&nbsp;{{manager}} 
   </el-menu-item>
   <!-- <h3 style="float:right;margin-right:1cm">欢迎,{{user}} </h3> -->
 </el-menu>
@@ -25,31 +22,14 @@
 
     <el-row >
         <span>{{ path }}</span>
-        <el-button type="primary"  @click="returnLastPath">上一页</el-button>
-        <el-button type="primary" @click="inputFileName">新建文件夹</el-button>
+        <el-button type="primary" @click="accept">审核通过</el-button>
          <el-button type="primary" @click="downLoadFile">下载</el-button>
           <el-button type="primary" @click="deleteFile">删除</el-button>
-        <el-button type="primary" @click="shareFile">分享文件</el-button>
           
-<el-dropdown @command="handleCommand">
-  <el-button type="primary">
-    大数据操作<i class="el-icon-arrow-down el-icon--right"></i>
-  </el-button>
-  <el-dropdown-menu slot="dropdown">
-    <el-dropdown-item command="wordCount">单词统计</el-dropdown-item>
-  </el-dropdown-menu>
-</el-dropdown>
-        <el-upload
-            class="upload-demo taboo"
-            :action="this.baseURL+'/createFile/'"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :before-remove="beforeRemove"
-            :data="{path:'/pan/'+this.user+'/'+this.path}"
-            :on-success="upLoadSuccess"
-            >
-            <el-button type="primary">上传<i class="el-icon-upload el-icon--right"></i></el-button>
-        </el-upload>
+
+
+
+
 
     </el-row>
     <br>
@@ -60,13 +40,13 @@
         </el-table-column>
         <el-table-column type="index" label="序号">
         </el-table-column>
-        <el-table-column  prop="fileName" label="文件名">
+        <el-table-column  prop="filename" label="文件名">
             <template slot-scope="scope">
                 <svg  class="icon" aria-hidden="true">
-                    <use v-if="scope.row.isDir==='true'" xlink:href="#icon-wenjianjia2"></use>
+                    <use v-if="false" xlink:href="#icon-wenjianjia2"></use>
                     <use v-else xlink:href="#icon-wenjian"></use>
                 </svg>
-                <el-link :underline="false" v-on:click="clickFile(scope.row.fileName,scope.row.isDir,scope.row.filePath)">{{scope.row.fileName}}</el-link>
+                <el-link :underline="false" v-on:click="clickFile(scope.row.filename,scope.row.filepath)">{{scope.row.filename}}</el-link>
             </template>
         </el-table-column>
         <el-table-column prop="len" label="大小">
@@ -97,8 +77,9 @@
 export default {
     data(){
         return {
-            imgUrl:'https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=2987801098,1858423351&fm=26&gp=0.jpg',
+            imgUrl:'https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=1004454177,2389198999&fm=26&gp=0.jpg',
 showViewer: false, 
+manager:"",
             list: [],
             pagesize: 10,
             currpage: 1,
@@ -108,10 +89,39 @@ showViewer: false,
             pathArray:[],
             fileList: [],
             selectFileArray:[],
-            activeIndex: '1'
+            activeIndex: '2'
         }
     },
     methods: {
+                    handleSelect(key, keyPath) {
+                console.log(key);
+                if(key==2){
+                    this.$router.push({path:'/checkFile'})
+                }else if(key==3){
+                    this.$router.push({path:'/finishFile'})
+                }else if(key==1){
+                    this.$router.push({path:'/log'})
+                }
+            },
+        accept(){
+            var t=this;
+                this.selectFileArray.forEach(function(value){
+                    t.setState(value.id,1);
+                })
+            },
+        setState(id,state){
+          var params = new URLSearchParams();
+          params.append('id',id);
+          params.append('state',state);
+          this.$axios.post('updateFileState',params, {headers: {'Content-Type': 'application/x-www-form-urlencoded'}}
+          ).then(data => {
+                          this.currpage=1;
+            this.findByPage(this.currpage,this.pagesize);
+              }).catch(err => {
+                  console.error(err)
+                  this.$alert('请求超时，刷新重试！')
+                  })
+        },
         myShare(){
             var routeUrl=this.$router.resolve({path:'/myShare'})
             window.open(routeUrl .href, '_blank');
@@ -139,33 +149,12 @@ showViewer: false,
             closeViewer() {
                 this.showViewer = false
              },
-            handleSelect(key, keyPath) {
-                console.log(key);
-                if(key==2){
-                    this.$router.push({path:'/test'})
-                }else if(key==10){
-                    var routeUrl=this.$router.resolve({path:'/userDetail'})
-                    window.open(routeUrl .href, '_blank');
-                }else if(key==3){
-                    this.$router.push({path:'/dynamic'})
-                }else if(key==1){
-                    this.$router.push({path:'/list'})
-                }else if(key==4){
-                    this.$router.push({path:'/addDynamic'})
-                }else if(key==5){
-                    this.$router.push({path:'/myShare'})
-                }else if(key==6){
-                    this.$router.push({path:'/select'})
-                }
-            },
             downLoadFile(){
                 var temp=[];
                 var t=this;
                 this.selectFileArray.forEach(function(value){
-                    if(value.isDir=="false"){
                         temp.push(value);
-                        t.fileStream(value.fileName,value.filePath);
-                    }
+                        t.fileStream(value.filename,value.filepath);
                 })
             },
             fileStream(fileName,filePath){
@@ -193,8 +182,10 @@ showViewer: false,
             deleteFile(){
                 var params = new URLSearchParams();
                 var list=[];
+                var t=this;
                  this.selectFileArray.forEach(function(value){
-                     list.push(value.filePath);
+                     list.push(value.filepath);
+                     t.setState(value.id,-1);
                 })
                 params.append('list',list);
                 this.$axios.post('deleteFile',params, {headers: {'Content-Type': 'application/x-www-form-urlencoded'}}
@@ -224,12 +215,19 @@ showViewer: false,
                 var params = new URLSearchParams();
                 params.append('currentPage',pageCode);
                 params.append('pageSize',pageSize);
-                params.append('path',"/pan/"+this.user+"/"+this.path);
-                this.$axios.post('listFilebypage',params, {headers: {'Content-Type': 'application/x-www-form-urlencoded'}}
+                this.$axios.post('getCheckFileBypage',params, {headers: {'Content-Type': 'application/x-www-form-urlencoded'}}
                 ).then(data => {
                     console.log(data);
-                    this.list = data.data.list;
-                    this.rowCount=data.data.rowCount;
+                    this.list = data.data;
+                }).catch(err => {
+                    console.error(err)
+                    this.$alert('请求超时，刷新重试！')
+                })
+            },
+            setRowCount(){
+                this.$axios.post('getCheckFileCount'
+                ).then(data => {
+                    this.rowCount=data.data;
                 }).catch(err => {
                     console.error(err)
                     this.$alert('请求超时，刷新重试！')
@@ -253,19 +251,9 @@ showViewer: false,
                 console.log("val");
                 this.selectFileArray=val;
             },
-            clickFile(name,isDir,filePath){
-                console.log(this.path);
-                console.log(isDir)
-                if(isDir=="true"){
-                    this.lastpath=this.path;
-                    //this.path+=name+"/";
-                    this.pathArray.push(name);
-                    this.path=this.getpath();
-                    this.currpage=1;
-                    this.findByPage(this.currpage,this.pagesize);
-                }else{
-                    this.handlePreview(name,filePath)
-                }
+            clickFile(name,filePath){
+                console.log(name);
+                this.handlePreview(name,filePath)
             },
             mkdir(fileName){
                 var params = new URLSearchParams();
@@ -424,12 +412,13 @@ getUserImage(name){
             }
         },
          mounted() {
-            if(!this.$cookie.get('user')){
+            if(!this.$cookie.get('manager')){
                 alert("请登录!")
-                this.$router.push({path:'/login'})
+                this.$router.push({path:'/managerLogin'})
             }
-            this.user=this.$cookie.get('user');
+            this.manager=this.$cookie.get('manager');
             this.findByPage(this.currpage,this.pagesize);
+            this.setRowCount();
             //console.log(this.getpath());
             //this.getUserImage(this.user)
         }

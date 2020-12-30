@@ -12,10 +12,15 @@
       <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
   <el-menu-item index="1">首页</el-menu-item>
   <el-menu-item index="2">好友</el-menu-item>
-    <el-menu-item index="3" style="float:right;margin-right:1cm"><img class="userImage" :src="userImg" alt="头像">&nbsp;&nbsp;{{userName}} 
+  <el-menu-item index="3">动态</el-menu-item>
+  <el-menu-item index="4">发动态</el-menu-item>
+  <el-menu-item index="5">我的分享</el-menu-item>
+  <el-menu-item index="6">搜索文件</el-menu-item>
+  <el-menu-item index="10" style="float:right;margin-right:1cm"><img  class="userImage" :src="userImg" alt="头像">&nbsp;&nbsp;{{userName}} 
   </el-menu-item>
+  <!-- <h3 style="float:right;margin-right:1cm">欢迎,{{user}} </h3> -->
 </el-menu>
-<br>
+   <br>
   <JwChat-index :config="config" :taleList="taleList" @enter="bindEnter" v-model="inputMsg" :toolConfig="tool"
   scrollType="scroll">
   <!-- <JwChat-rightbox :config="rightConfig" @click="rightClick" /> -->
@@ -32,6 +37,7 @@
 export default {
   data () {
     return {
+      signature:'',
       activeIndex: '2',
       url: 'ws://'+ window.location.host + '/Room/',
       ws:null,
@@ -115,12 +121,25 @@ export default {
     }
   },
   methods: {
-    handleSelect(key, keyPath) {
-      console.log(key);
-      if(key==1){
-        this.$router.push({path:'/list'})
-      }
-    },
+            handleSelect(key, keyPath) {
+                console.log(key);
+                if(key==2){
+                    this.$router.push({path:'/test'})
+                }else if(key==10){
+                    var routeUrl=this.$router.resolve({path:'/userDetail'})
+                    window.open(routeUrl .href, '_blank');
+                }else if(key==3){
+                    this.$router.push({path:'/dynamic'})
+                }else if(key==1){
+                    this.$router.push({path:'/list'})
+                }else if(key==4){
+                    this.$router.push({path:'/addDynamic'})
+                }else if(key==5){
+                    this.$router.push({path:'/myShare'})
+                }else if(key==6){
+                    this.$router.push({path:'/select'})
+                }
+            },
     bindClick (play) {
       this.toUserName=play.value.name
       this.config.name=play.value.name
@@ -241,6 +260,28 @@ export default {
                     this.$alert('请求超时，刷新重试！')
                 })
     },
+      getMyFriendNew(){
+        var t=this;
+                var params = new URLSearchParams();
+                params.append('name',this.userName);
+                this.$axios.post('getmyfriendsNew',params, {headers: {'Content-Type': 'application/x-www-form-urlencoded'}}
+                ).then(data => {
+                    console.log(data);
+                    var l=this.userList
+                    data.data.list.forEach(function(value,key){
+                        var temp={
+                          img: t.userImg,
+                          name: value.friendname,
+                         
+                        }
+                        l.push(temp)
+                    })
+
+                }).catch(err => {
+                    console.error(err)
+                    this.$alert('请求超时，刷新重试！')
+                })
+    },
     insertmessage(friendmessage){
                 this.sendMsg(friendmessage)
                 var params = new URLSearchParams();
@@ -338,6 +379,18 @@ getUserImage(name){
                     console.error(err)
                     this.$alert('请求超时，刷新重试！')
                 })
+},
+getIofo(){
+                var params = new URLSearchParams();
+                params.append("name",this.userName)
+                var t=this
+                this.$axios.post('getUser',params
+                ).then(res => {
+                  t.config.dept="用户签名:"+res.data.signature;
+                }).catch(err => {
+                    console.error(err)
+                    this.$alert('请求超时，刷新重试！')
+                })
 }
 
   },
@@ -350,11 +403,12 @@ getUserImage(name){
     console.log(this.toUserNameImg)
     this.config.img=this.toUserNameImg
     this.config.name=this.toUserName
-    this.getMyFriend();
+    this.getMyFriendNew();
     //this.initMessage();
     this.taleList=[]
     this.joinRoom()
-    this.getUserImage(this.userName)
+    //this.getUserImage(this.userName)
+    this.getIofo();
   }
 }
 </script>
